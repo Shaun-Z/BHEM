@@ -11,6 +11,17 @@ logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
 from itertools import combinations
 import tqdm
+
+# RC Viz Code
+
+from matplotlib.colors import LinearSegmentedColormap
+colors = []
+for j in np.linspace(1, 0, 100):
+    colors.append((30./255, 136./255, 229./255,j))
+for j in np.linspace(0, 1, 100):
+    colors.append((255./255, 13./255, 87./255,j))
+red_transparent_blue = LinearSegmentedColormap.from_list("red_transparent_blue", colors)
+
 def all_subsets(lst):
     for r in range(len(lst) + 1):
         for subset in combinations(lst, r):
@@ -330,7 +341,23 @@ class BhemExp:
         #     for subset2 in subsets2:
         #         print(f"Layer 2: {f2}: {subset2}")
                 
+    def plot_viz(self, result, masked_image, resized_images):
+        img = masked_image
+        # result = scores.reshape(1,10, 14, 14)
 
+        fig, axes = plt.subplots(nrows=1, ncols=11, figsize=(40,10), squeeze=False)
+
+        axes[0, 0].imshow(self.image, cmap=plt.get_cmap("gray_r"))
+        axes[0][0].axis('off')
+        max_val = np.nanpercentile(result[0], 99.9)
+        for i in range(10):
+            axes[0][i+1].imshow(-img, cmap='gray', alpha=0.3)
+            axes[0][i+1].imshow(resized_images[0][i], cmap=red_transparent_blue, vmin=-np.nanpercentile(result[0], 99.9),vmax=np.nanpercentile(result[0], 99.9))
+            axes[0][i+1].axis('off')
+            im = axes[0, i+1].imshow(resized_images[0][i], cmap=red_transparent_blue, vmin=-max_val, vmax=max_val)
+
+        plt.colorbar( im, ax=np.ravel(axes).tolist(), label="BHEM value", orientation="horizontal", aspect=40 / 0.2)
+        
 
     def print_explanation_info(self):
         logging.info(f'''Explanaion Info:
