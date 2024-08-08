@@ -4,7 +4,9 @@ from skimage.color import gray2rgb
 import numpy as np
 import matplotlib.pyplot as plt
 import logging
+import sys
 
+sys.path.append('/run/media/xiangyu/Data/Projects/XAI/BHEM')
 from utils import basic_segment
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
@@ -341,8 +343,7 @@ class BhemExp:
         #     for subset2 in subsets2:
         #         print(f"Layer 2: {f2}: {subset2}")
                 
-    def plot_viz(self, result, masked_image, resized_images):
-        img = masked_image
+    def plot_viz(self, result, resized_images, savename=None):
         # result = scores.reshape(1,10, 14, 14)
 
         fig, axes = plt.subplots(nrows=1, ncols=11, figsize=(40,10), squeeze=False)
@@ -351,13 +352,17 @@ class BhemExp:
         axes[0][0].axis('off')
         max_val = np.nanpercentile(result[0], 99.9)
         for i in range(10):
-            axes[0][i+1].imshow(-img, cmap='gray', alpha=0.3)
+            axes[0][i+1].imshow(-self.image, cmap='gray', alpha=0.3)
             axes[0][i+1].imshow(resized_images[0][i], cmap=red_transparent_blue, vmin=-np.nanpercentile(result[0], 99.9),vmax=np.nanpercentile(result[0], 99.9))
             axes[0][i+1].axis('off')
             im = axes[0, i+1].imshow(resized_images[0][i], cmap=red_transparent_blue, vmin=-max_val, vmax=max_val)
 
         plt.colorbar( im, ax=np.ravel(axes).tolist(), label="BHEM value", orientation="horizontal", aspect=40 / 0.2)
+
+        if savename is not None:
+            plt.savefig(savename)
         
+        plt.show()
 
     def print_explanation_info(self):
         logging.info(f'''Explanaion Info:
@@ -366,3 +371,63 @@ class BhemExp:
         ''')
         for layer_ID in range(1, self.layer_num):
             self.layers[layer_ID].print_info(draw=False)
+
+
+if __name__ == "__main__":
+    from matplotlib import pyplot as plt
+    import sys
+    import torch
+    sys.path.append('E:/Projects/XAI/BHEM')
+    sys.path.append('/run/media/xiangyu/Data/Projects/XAI/BHEM')
+    from model import Cnn, getClassifier
+    from dataset import handwriting
+    from utils import reconstruct_mask, basic_segment, quickshift, slic
+    torch.manual_seed(0)
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    cnn = getClassifier(Cnn, device, f_params='./MINST.pkl')
+    # %% Load MINST dataset
+    mnist = handwriting('mnist_784', normalize=True)
+
+    testnum = 50
+    Images = mnist.XCnn[:testnum]
+    Xlabel = cnn.predict(Images)
+    Images.shape, Xlabel.shape
+
+    img_ID = 19
+    img = Images[img_ID].reshape(28, 28)
+    label = Xlabel[img_ID]
+    # img = image_array.astype(np.float32)
+    bhem_exp = BhemExp(img, layer_num=4, random_state=None, random_seed=None)
+
+    plt.figure(figsize=(10, 5))
+    for i in range(testnum):
+        plt.subplot(5, 10, i+1)
+        plt.imshow(Images[i].reshape(28, 28), cmap='gray')
+        plt.axis('off')
+
+    bhem_exp.print_explanation_info()
+
+    scores = bhem_exp.get_explanation(cnn.predict_proba,label)
+
+    result = scores.reshape(1,10, 14, 14)
+
+    np.save(f'result_array_{img_ID}.npy', result)
+
+    import torch.nn.functional as F
+    resized_images = F.interpolate(torch.tensor(result), size=(28, 28), mode='bilinear', align_corners=False).numpy()
+
+    from matplotlib.colors import LinearSegmentedColormap
+    colors = []
+    for j in np.linspace(1, 0, 100):
+        colors.append((30./255, 136./255, 229./255,j))
+    for j in np.linspace(0, 1, 100):
+        colors.append((255./255, 13./255, 87./255,j))
+    red_transparent_blue = LinearSegmentedColormap.from_list("red_transparent_blue", colors)
+    plt.figure(figsize=(40, 10))
+    for i in range(10):
+        plt.subplot(2, 5, i+1)
+        plt.imshow(result[0][i], cmap=red_transparent_blue, vmin=-np.nanpercentile(result[0], 99.9),vmax=np.nanpercentile(result[0], 99.9))
+        plt.axis('off')
+    plt.show()
+
+    bhem_exp.plot_viz(result, resized_images, savename=f'./images/bhem_{img_ID}.png')

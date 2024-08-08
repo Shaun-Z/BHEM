@@ -56,7 +56,7 @@ class basic_segment:
     def get_mask(self, img=None, feature_ID=4):
         return self.features_list[feature_ID]
 
-    def plot_segments(self, feature_ID):
+    def plot_segments(self, feature_ID, savename=None):
         feature = self.get_mask(feature_ID=feature_ID)
         print(feature)
         # Display heatmap of basic_seg
@@ -72,6 +72,10 @@ class basic_segment:
         plt.xticks(np.arange(0, self.W, 1))
         plt.yticks(np.arange(0, self.H, 1))
         plt.title(f'Basic Segmentation: Layer {feature_ID}', fontsize=25, y=1.05)
+        
+        if savename is not None:
+            plt.savefig(savename)
+            
         plt.show()
 
     # def __call__(self):
@@ -83,10 +87,13 @@ if __name__ == '__main__':
     from skimage.color import gray2rgb
     import sys
     sys.path.append('E:/Projects/XAI/BHEM')
-    # basic_seg = basic_segment(np.zeros((28,28)))
-    # print(basic_seg.H, basic_seg.W)
-    # for i in range(6):
-    #     basic_seg.plot_segments(feature_ID=i)
+    sys.path.append('/run/media/xiangyu/Data/Projects/XAI/BHEM')
+    basic_seg = basic_segment(np.zeros((28,28)))
+    print(basic_seg.H, basic_seg.W)
+    for i in range(6):
+        basic_seg.plot_segments(feature_ID=i, savename=f'./basic_seg_layer_{i}.png')
+        
+    
     from dataset import handwriting
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     mnist = handwriting('mnist_784', normalize=True)

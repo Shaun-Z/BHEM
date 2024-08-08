@@ -1,6 +1,7 @@
 import shap
 import numpy as np
 import torch
+
 import matplotlib.pyplot as plt
 
 from matplotlib.colors import LinearSegmentedColormap
@@ -64,9 +65,9 @@ class ShapExp:
         plt.show()
 
 if __name__ == "__main__":
-    from matplotlib import pyplot as plt
     import sys
     sys.path.append('E:/Projects/XAI/BHEM')
+    sys.path.append('/run/media/xiangyu/Data/Projects/XAI/BHEM')
     from model import Cnn, getClassifier
     from dataset import handwriting
     from utils import reconstruct_mask, basic_segment, quickshift, slic
@@ -97,8 +98,6 @@ if __name__ == "__main__":
     shap_exp.plot_shap()
     shap_exp.plot_image()
 
-    
-
     import pandas as pd
     import seaborn as sns
     print(segments_qs)
@@ -108,3 +107,5 @@ if __name__ == "__main__":
     print(len(np.unique(shap_values)))
     sns.heatmap(shap_values, cmap='coolwarm')
     plt.show()
+
+    np.save(f'result_shap_array_{testID}.npy', shap_values)
