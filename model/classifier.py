@@ -52,6 +52,7 @@ if __name__ == '__main__':
     # %% Load MINST dataset
     import sys
     sys.path.append('E:/Projects/XAI/BHEM')
+    sys.path.append('/run/media/xiangyu/Data/Projects/XAI/BHEM')
     from dataset import handwriting
     mnist = handwriting('mnist_784', normalize=True)
 
@@ -59,7 +60,7 @@ if __name__ == '__main__':
     testnum = 50
 
     Xsample = mnist.XCnn[:testnum]
-    Xlabel = cnn.predict(Xsample)
+    Xlabel = cnn.predict_proba(Xsample)
     print(Xsample.shape, Xlabel.shape)
     print(type(mnist), type(mnist.X), type(mnist.y), type(mnist.XCnn), type(Xsample), type(Xlabel))
-    print(Xlabel-mnist.y[:testnum])
+    # print(Xlabel-mnist.y[:testnum])
