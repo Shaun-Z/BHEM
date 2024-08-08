@@ -7,7 +7,7 @@ import logging
 import sys
 
 sys.path.append('/run/media/xiangyu/Data/Projects/XAI/BHEM')
-from utils import basic_segment
+from utils import basic_segment, red_transparent_blue
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
@@ -15,14 +15,6 @@ from itertools import combinations
 import tqdm
 
 # RC Viz Code
-
-from matplotlib.colors import LinearSegmentedColormap
-colors = []
-for j in np.linspace(1, 0, 100):
-    colors.append((30./255, 136./255, 229./255,j))
-for j in np.linspace(0, 1, 100):
-    colors.append((255./255, 13./255, 87./255,j))
-red_transparent_blue = LinearSegmentedColormap.from_list("red_transparent_blue", colors)
 
 def all_subsets(lst):
     for r in range(len(lst) + 1):
