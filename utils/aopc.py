@@ -104,5 +104,5 @@ if __name__ == '__main__':
     print(f"SHAP AOPC on image {img_ID} is {AOPCs.get_single_aopc_value(Image, y, shap_exp_values)}")
 
     # %% Test the AOPC on batched images
-    print(AOPCs.get_average_shap_aopc_value(testnum=50, dataset = mnist.XCnn))
+    print(AOPCs.get_average_shap_aopc_value(testnum=50, dataset = mnist))
     AOPCs.plot_aopc()
