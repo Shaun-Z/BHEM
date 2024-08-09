@@ -14,8 +14,8 @@ def basic_segmentation(img):
 
 class basic_segment:
     def __init__(self, img):
-        H = img.shape[0]
-        W = img.shape[1]
+        H = img.shape[-2]
+        W = img.shape[-1]
         self.W = W
         self.H = H
         self.img = img

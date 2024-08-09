@@ -4,6 +4,10 @@ import torch
 
 import matplotlib.pyplot as plt
 
+import sys
+
+sys.path.append('/run/media/xiangyu/Data/Projects/XAI/BHEM')
+# sys.path.append('../../../BHEM')
 from utils import red_transparent_blue
 
 class ShapExp:
@@ -23,6 +27,7 @@ class ShapExp:
         self.y = np.argmax(self.y_pred[0])
         
         self.explainer = shap.Explainer(model, masker)
+
         shap_values = self.explainer(image, max_evals=20000, batch_size=500)
 
         self.shap_values = np.moveaxis(shap_values.values,-1,0)
@@ -67,6 +72,7 @@ if __name__ == "__main__":
     from utils import reconstruct_mask, basic_segment, quickshift, slic
     torch.manual_seed(0)
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    model = Cnn().to(device)
     cnn = getClassifier(Cnn, device, f_params='./MINST.pkl')
     # %% Load MINST dataset
     mnist = handwriting('mnist_784', normalize=True)
@@ -83,8 +89,7 @@ if __name__ == "__main__":
     segments_basic = basic_segment(Image)
     print(segments_basic.get_mask().shape)
     # %% Shap
-    # shap_exp = ShapExp(cnn.predict_proba, Image.unsqueeze(0), masker=segments_basic.get_mask())
-    shap_exp = ShapExp(cnn.predict_proba, Image.unsqueeze(0), masker=segments_slic)
+    shap_exp = ShapExp(cnn.predict_proba, Image.unsqueeze(0), masker=segments_basic.get_mask())
     # shap_exp = ShapExp(cnn.predict_proba, Image.unsqueeze(0), masker=segments_qs)
     print(shap_exp.y_pred, np.argmax(shap_exp.y_pred))
     shap_exp.plot_cmp()
@@ -102,4 +107,4 @@ if __name__ == "__main__":
     sns.heatmap(shap_values, cmap='coolwarm')
     plt.show()
 
-    np.save(f'result_shap_array_{testID}.npy', shap_values)
+    np.save(f'./result/shap/result_shap_array_{testID}.npy', shap_values)
