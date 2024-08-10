@@ -78,7 +78,7 @@ if __name__ == '__main__':
 
     basic_seg = basic_segment(Images)
     test_ID = 2
-    lime_exp = LimeExp(Images[test_ID], basic_seg.get_mask, num_features=196, num_samples=5000)
+    lime_exp = LimeExp(Images[test_ID], basic_seg.get_mask, num_features=784, num_samples=5000)
     # lime_exp = LimeExp(Images[test_ID], lambda img: slic(img, n_segments=100, compactness=0.1, sigma=0.5), num_features=784, num_samples=5000)
     # lime_exp = LimeExp(Images[test_ID], lambda img: quickshift(img, kernel_size=4, max_dist=10, ratio=0.2), num_features=196, num_samples=5000)
     mask, image_marked, img_boundary = lime_exp.get_image()
