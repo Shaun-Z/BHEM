@@ -53,7 +53,7 @@ class basic_segment:
 
         self.features_list = [Feature_0, Feature_1, Feature_2, Feature_3, Feature_4, Feature_5]
 
-    def get_mask(self, img=None, feature_ID=4):
+    def get_mask(self, img=None, feature_ID=5):
         return self.features_list[feature_ID]
 
     def plot_segments(self, feature_ID, savename=None):
