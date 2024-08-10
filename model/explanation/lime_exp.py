@@ -3,7 +3,10 @@ import torch.nn.functional as F
 import numpy as np
 from skimage.segmentation import mark_boundaries
 from lime.lime_image import LimeImageExplainer
+from model import Cnn, getClassifier
 
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+cnn = getClassifier(Cnn, device, f_params='./MINST.pkl')
 
 def lime_predict(z):
     """In `explainer.explain_instance()` method, the 2D image is converted to 3D by adding a channel dimension"""
@@ -23,6 +26,13 @@ class LimeExp:
                                         )
         self.image_marked, self.mask = self.explanation.get_image_and_mask(self.explanation.top_labels[0], positive_only=False, num_features=num_features//11, hide_rest=False)
         self.img_boundry = mark_boundaries(self.image_marked/255.0, self.mask)
+
+    def get_exp_values(self):
+        temp = self.explanation.local_exp[self.explanation.top_labels[0]]
+        exp_values = np.zeros(784)
+        for index, value in temp:
+            exp_values[index] = value
+        return exp_values.reshape(28, 28)
     
     def get_image(self):
         return  self.mask, self.image_marked, self.img_boundry
@@ -54,7 +64,7 @@ if __name__ == '__main__':
     sys.path.append('E:/Projects/XAI/BHEM')
     sys.path.append('/umich/Library/Mobile Documents/com~apple~CloudDocs/BHEM')
     sys.path.append('/run/media/xiangyu/Data/Projects/XAI/BHEM')
-    from model import Cnn, getClassifier
+    
     from dataset import handwriting
     from utils import reconstruct_mask, basic_segment, quickshift, slic
     torch.manual_seed(0)
