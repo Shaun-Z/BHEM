@@ -52,6 +52,8 @@ if __name__ == '__main__':
     from matplotlib import pyplot as plt
     import sys
     sys.path.append('E:/Projects/XAI/BHEM')
+    sys.path.append('/umich/Library/Mobile Documents/com~apple~CloudDocs/BHEM')
+    sys.path.append('/run/media/xiangyu/Data/Projects/XAI/BHEM')
     from model import Cnn, getClassifier
     from dataset import handwriting
     from utils import reconstruct_mask, basic_segment, quickshift, slic
@@ -76,10 +78,10 @@ if __name__ == '__main__':
 
     basic_seg = basic_segment(Images)
     test_ID = 2
-    # lime_exp = LimeExp(Images[test_ID], basic_seg.get_mask, num_features=196, num_samples=5000)
+    lime_exp = LimeExp(Images[test_ID], basic_seg.get_mask, num_features=196, num_samples=5000)
     # lime_exp = LimeExp(Images[test_ID], lambda img: slic(img, n_segments=100, compactness=0.1, sigma=0.5), num_features=784, num_samples=5000)
-    lime_exp = LimeExp(Images[test_ID], lambda img: quickshift(img, kernel_size=4, max_dist=10, ratio=0.2), num_features=196, num_samples=5000)
-    mask, image_marked, img_boundry = lime_exp.get_image()
+    # lime_exp = LimeExp(Images[test_ID], lambda img: quickshift(img, kernel_size=4, max_dist=10, ratio=0.2), num_features=196, num_samples=5000)
+    mask, image_marked, img_boundary = lime_exp.get_image()
     lime_exp.plot_boundry()
     lime_exp.plot_image()
     lime_exp.plot_mask()

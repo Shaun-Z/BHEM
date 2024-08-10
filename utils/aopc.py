@@ -71,6 +71,23 @@ class aopc:
         self.SHAP_AOPC = self.SHAP_AOPC/testnum
 
         return self.SHAP_AOPC
+    '''
+    First Job
+    '''
+    def get_average_lime_aopc_value():
+        pass
+
+    def get_average_bhem_aopc_value():
+        pass
+
+    def get_average_acd_aopc_value():
+        pass
+
+    def get_XXX():
+        pass
+
+    def get_YYY():
+        pass
     
     def plot_aopc(self):
         plt.figure(figsize=(8, 6))
