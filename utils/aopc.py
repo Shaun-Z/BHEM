@@ -6,6 +6,8 @@ import tqdm
 sys.path.append('/run/media/xiangyu/Data/Projects/XAI/BHEM')
 
 from model.explanation.shap_exp import ShapExp
+from model.explanation.lime_exp import LimeExp
+from model.explanation.acd_exp import AcdExp
 from matplotlib import pyplot as plt
 from model import Cnn, getClassifier
 from dataset import handwriting
@@ -46,19 +48,19 @@ class aopc:
     '''
     This method could be used to calculate the AOPC value for a single image. Any explanation method fits as long as the explanation values are provided.
     '''
-    def get_single_aopc_value(self, image, y, exp_values):
-        X_pred = self.model(image)
+    def get_single_aopc_value(self, model, image, y, exp_values):
+        X_pred = model(image)
         base_value = X_pred.flatten()[y].item()
 
         AOPC = np.array([0.0]*len(self.percents))
         for i in range(len(self.percents)):
             res = delet_top_k_feature(self.percents[i], image.numpy(), exp_values)
-            AOPC[i] = base_value - self.model(res).flatten()[y]
+            AOPC[i] = base_value - model(res).flatten()[y]
         return AOPC
     
     def get_average_shap_aopc_value(self, testnum, dataset):
         self.SHAP_AOPC = np.array([0.0]*len(self.percents))
-        for img_ID in tqdm.tqdm(range(testnum), desc=f"\033[92m{testnum}\033[0m images"):
+        for img_ID in tqdm.tqdm(range(testnum), desc=f"SHAP: \033[92m{testnum}\033[0m images"):
             Image = torch.from_numpy(dataset.XCnn[img_ID]).unsqueeze(0)
             y = dataset.y[img_ID]
 
@@ -66,22 +68,59 @@ class aopc:
             shap_exp = ShapExp(self.model, Image, masker=basic_seg.get_mask())
             exp_values = shap_exp.shap_values[y, 0, 0, :, :]
 
-            self.SHAP_AOPC += self.get_single_aopc_value(Image, y, exp_values)
+            self.SHAP_AOPC += self.get_single_aopc_value(self.model, Image, y, exp_values)
 
         self.SHAP_AOPC = self.SHAP_AOPC/testnum
 
         return self.SHAP_AOPC
-    '''
-    First Job
-    '''
-    def get_average_lime_aopc_value():
+
+    def get_average_lime_aopc_value(self, testnum, dataset):
+        self.LIME_AOPC = np.array([0.0]*len(self.percents))
+        for img_ID in tqdm.tqdm(range(testnum), desc=f"LIME: \033[92m{testnum}\033[0m images"):
+            Image = torch.from_numpy(dataset.XCnn[img_ID])
+            y = dataset.y[img_ID]
+            basic_seg = basic_segment(Image)
+            lime_exp = LimeExp(Image, basic_seg.get_mask, num_features=784, num_samples=2000)
+            exp_values = lime_exp.get_exp_values()
+
+            self.LIME_AOPC += self.get_single_aopc_value(self.model, Image.unsqueeze(0), y, exp_values)
+
+        self.LIME_AOPC = self.LIME_AOPC/testnum
+
+        return self.LIME_AOPC
+    
+    def get_average_bhem_aopc_value(self, testnum, dataset):
         pass
 
-    def get_average_bhem_aopc_value():
-        pass
+    def get_average_acd_aopc_value(self, testnum, dataset):
+        model = Cnn()
+        checkpoint = torch.load('./MINST.pkl', map_location=torch.device('cpu'))
+        model.load_state_dict(checkpoint)
+        model.to(device)
+        model.eval()
 
-    def get_average_acd_aopc_value():
-        pass
+        self.ACD_AOPC = np.array([0.0]*len(self.percents))
+
+        for img_ID in tqdm.tqdm(range(testnum), desc=f"ACD: \033[92m{testnum}\033[0m images"):
+            Image = torch.tensor(dataset.XCnn[img_ID].reshape(-1, 1, 28, 28)).to(device)
+            X_pred = model(Image)
+            y = dataset.y[img_ID]
+
+            base_value = X_pred.flatten()[y].item()
+            
+            ACDexp = AcdExp(Image, sweep_dim=1)
+            scores = ACDexp.get_explanation(model, y)
+            acd_exp_values = scores[0][:, y].reshape(28,28)
+
+            for i in range(len(self.percents)):
+                res = torch.tensor(delet_top_k_feature(self.percents[i], Image.cpu().numpy(), acd_exp_values)).to(device)
+                # plt.imshow(res.cpu().numpy().reshape(28, 28), cmap='gray')
+                # plt.show()
+                self.ACD_AOPC[i] += base_value - model(res).flatten()[y]
+
+        self.ACD_AOPC = self.ACD_AOPC/testnum
+
+        return self.ACD_AOPC
 
     def get_XXX():
         pass
@@ -107,7 +146,10 @@ if __name__ == '__main__':
     # %% Load MINST dataset
     mnist = handwriting('mnist_784', normalize=True)
 
-    AOPCs = aopc(cnn.predict_proba)
+
+    AOPCs = aopc(cnn.predict_proba, percents=[0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50])
+    # [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50]
+    # [0.2,0.4,0.6,0.8,1.0]
 
     # %% Test the AOPC on single image
     img_ID = 0
@@ -115,11 +157,18 @@ if __name__ == '__main__':
     y = mnist.y[img_ID]
 
     basic_seg = basic_segment(Image)
-    shap_exp = ShapExp(cnn.predict_proba, Image, masker=basic_seg.get_mask())
-    shap_exp_values = shap_exp.shap_values[y, 0, 0, :, :]
-
-    print(f"SHAP AOPC on image {img_ID} is {AOPCs.get_single_aopc_value(Image, y, shap_exp_values)}")
+    # %% Test on SHAP
+    # shap_exp = ShapExp(cnn.predict_proba, Image, masker=basic_seg.get_mask())
+    # shap_exp_values = shap_exp.shap_values[y, 0, 0, :, :]
+    # print(f"SHAP AOPC on image {img_ID} is {AOPCs.get_single_aopc_value(Image, y, shap_exp_values)}")
+    # %% Test on LIME
+    # lime_exp = LimeExp(Image.squeeze(0), basic_seg.get_mask, num_features=784, num_samples=2000)
+    # lime_exp_values = lime_exp.get_exp_values()
+    # print(f"SHAP AOPC on image {img_ID} is {AOPCs.get_single_aopc_value(Image, y, lime_exp_values)}")
+    # %% Test on ACD
 
     # %% Test the AOPC on batched images
     print(AOPCs.get_average_shap_aopc_value(testnum=50, dataset = mnist))
+    print(AOPCs.get_average_lime_aopc_value(testnum=50, dataset = mnist))
+    print(AOPCs.get_average_acd_aopc_value(testnum=50, dataset = mnist))
     AOPCs.plot_aopc()
