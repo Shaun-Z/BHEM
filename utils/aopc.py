@@ -43,7 +43,9 @@ class aopc:
         self.LIME_AOPC = np.array([0.0]*len(self.percents))
         self.SHAP_AOPC = np.array([0.0]*len(self.percents))
         self.BHEM_AOPC = np.array([0.0]*len(self.percents))
-        self.ACD_AOPC = np.array([0.0]*len(self.percents))
+        self.ACD_AOPC0 = np.array([0.0]*len(self.percents))
+        self.ACD_AOPC1 = np.array([0.0]*len(self.percents))
+        self.ACD_AOPC2 = np.array([0.0]*len(self.percents))
 
     '''
     This method could be used to calculate the AOPC value for a single image. Any explanation method fits as long as the explanation values are provided.
@@ -99,7 +101,9 @@ class aopc:
         model.to(device)
         model.eval()
 
-        self.ACD_AOPC = np.array([0.0]*len(self.percents))
+        self.ACD_AOPC0 = np.array([0.0]*len(self.percents))
+        self.ACD_AOPC1 = np.array([0.0]*len(self.percents))
+        self.ACD_AOPC2 = np.array([0.0]*len(self.percents))
 
         for img_ID in tqdm.tqdm(range(testnum), desc=f"ACD: \033[92m{testnum}\033[0m images"):
             Image = torch.tensor(dataset.XCnn[img_ID].reshape(-1, 1, 28, 28)).to(device)
@@ -110,24 +114,26 @@ class aopc:
             
             ACDexp = AcdExp(Image, sweep_dim=1)
             scores = ACDexp.get_explanation(model, y)
-            acd_exp_values = scores[0][:, y].reshape(28,28)
+            acd_exp_values0 = scores[0][:, y].reshape(28,28)
+            acd_exp_values1 = scores[1][:, y].reshape(28,28)
+            acd_exp_values2 = scores[2][:, y].reshape(28,28)
 
             for i in range(len(self.percents)):
-                res = torch.tensor(delet_top_k_feature(self.percents[i], Image.cpu().numpy(), acd_exp_values)).to(device)
+                res0 = torch.tensor(delet_top_k_feature(self.percents[i], Image.cpu().numpy(), acd_exp_values0)).to(device)
+                res1 = torch.tensor(delet_top_k_feature(self.percents[i], Image.cpu().numpy(), acd_exp_values1)).to(device)
+                res2 = torch.tensor(delet_top_k_feature(self.percents[i], Image.cpu().numpy(), acd_exp_values2)).to(device)
                 # plt.imshow(res.cpu().numpy().reshape(28, 28), cmap='gray')
                 # plt.show()
-                self.ACD_AOPC[i] += base_value - model(res).flatten()[y]
+                self.ACD_AOPC0[i] += base_value - model(res0).flatten()[y]
+                self.ACD_AOPC1[i] += base_value - model(res1).flatten()[y]
+                self.ACD_AOPC2[i] += base_value - model(res2).flatten()[y]
 
-        self.ACD_AOPC = self.ACD_AOPC/testnum
+        self.ACD_AOPC0 = self.ACD_AOPC0/testnum
+        self.ACD_AOPC1 = self.ACD_AOPC1/testnum
+        self.ACD_AOPC2 = self.ACD_AOPC2/testnum
 
-        return self.ACD_AOPC
+        return self.ACD_AOPC0, self.ACD_AOPC1, self.ACD_AOPC2
 
-    def get_XXX():
-        pass
-
-    def get_YYY():
-        pass
-    
     def plot_aopc(self):
         plt.figure(figsize=(8, 6))
         plt.plot(self.percents*100, self.BHEM_AOPC, 's-', markersize = 4, color = 'y', label="BHEM")
