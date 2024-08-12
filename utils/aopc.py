@@ -196,8 +196,9 @@ if __name__ == '__main__':
     # %% Test on ACD
 
     # %% Test the AOPC on batched images
-    print(AOPCs.get_average_shap_aopc_value(testnum=50, dataset = mnist))
-    print(AOPCs.get_average_lime_aopc_value(testnum=50, dataset = mnist))
-    print(AOPCs.get_average_acd_aopc_value(testnum=50, dataset = mnist))
-    print(AOPCs.get_average_bhem_aopc_value(testnum=50, dataset = mnist))
+    testnum = 100
+    print(AOPCs.get_average_shap_aopc_value(testnum=testnum, dataset = mnist))
+    print(AOPCs.get_average_lime_aopc_value(testnum=testnum, dataset = mnist))
+    print(AOPCs.get_average_acd_aopc_value(testnum=testnum, dataset = mnist))
+    print(AOPCs.get_average_bhem_aopc_value(testnum=testnum, dataset = mnist))
     AOPCs.plot_aopc()
