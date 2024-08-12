@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import sys
 import tqdm
-
+import torch.nn.functional as F
 sys.path.append('/run/media/xiangyu/Data/Projects/XAI/BHEM')
 
 from model.explanation.shap_exp import ShapExp
@@ -17,8 +17,9 @@ def delet_top_k_feature(k, img, value):
     total_sum = np.sum(value)
 
     # Sort the values in descending order and get the corresponding indices
-    sorted_indices = np.argsort(-img.flatten())
+    sorted_indices = np.argsort(-value.flatten())
     sorted_values = value.flatten()[sorted_indices]
+    # print(np.concatenate((sorted_indices.flatten(), sorted_values.flatten()), axis=0))
 
     # Calculate the cumulative sum
     cumulative_sum = np.cumsum(sorted_values)
@@ -43,9 +44,10 @@ class aopc:
         self.LIME_AOPC = np.array([0.0]*len(self.percents))
         self.SHAP_AOPC = np.array([0.0]*len(self.percents))
         self.BHEM_AOPC = np.array([0.0]*len(self.percents))
-        self.ACD_AOPC0 = np.array([0.0]*len(self.percents))
-        self.ACD_AOPC1 = np.array([0.0]*len(self.percents))
-        self.ACD_AOPC2 = np.array([0.0]*len(self.percents))
+        self.ACD_AOPC = np.array([0.0]*len(self.percents))
+        self.OCCLUSION_AOPC = np.array([0.0]*len(self.percents))
+        self.BUILDUP_AOPC = np.array([0.0]*len(self.percents))
+        self.IG_AOPC = np.array([0.0]*len(self.percents))
 
     '''
     This method could be used to calculate the AOPC value for a single image. Any explanation method fits as long as the explanation values are provided.
@@ -92,7 +94,19 @@ class aopc:
         return self.LIME_AOPC
     
     def get_average_bhem_aopc_value(self, testnum, dataset):
-        pass
+        self.BHEM_AOPC = np.array([0.0]*len(self.percents))
+        for img_ID in tqdm.tqdm(range(testnum), desc=f"BHEM: \033[92m{testnum}\033[0m images"):
+            Image = torch.from_numpy(dataset.XCnn[img_ID])
+            y = dataset.y[img_ID]
+            exp_result = np.load(f'./result/bhem/result_array_{img_ID}.npy', allow_pickle=True)
+            resized_images = F.interpolate(torch.tensor(exp_result), size=(28, 28), mode='bilinear', align_corners=False).numpy()/4
+            exp_values = resized_images[0, y, :, :]
+
+            self.BHEM_AOPC += self.get_single_aopc_value(self.model, Image.unsqueeze(0), y, exp_values)
+
+        self.BHEM_AOPC = self.BHEM_AOPC/testnum
+
+        return self.BHEM_AOPC
 
     def get_average_acd_aopc_value(self, testnum, dataset):
         model = Cnn()
@@ -101,9 +115,10 @@ class aopc:
         model.to(device)
         model.eval()
 
-        self.ACD_AOPC0 = np.array([0.0]*len(self.percents))
-        self.ACD_AOPC1 = np.array([0.0]*len(self.percents))
-        self.ACD_AOPC2 = np.array([0.0]*len(self.percents))
+        self.ACD_AOPC = np.array([0.0]*len(self.percents))
+        self.OCCLUSION_AOPC = np.array([0.0]*len(self.percents))
+        self.BUILDUP_AOPC = np.array([0.0]*len(self.percents))
+        self.IG_AOPC = np.array([0.0]*len(self.percents))
 
         for img_ID in tqdm.tqdm(range(testnum), desc=f"ACD: \033[92m{testnum}\033[0m images"):
             Image = torch.tensor(dataset.XCnn[img_ID].reshape(-1, 1, 28, 28)).to(device)
@@ -115,24 +130,28 @@ class aopc:
             ACDexp = AcdExp(Image, sweep_dim=1)
             scores = ACDexp.get_explanation(model, y)
             acd_exp_values0 = scores[0][:, y].reshape(28,28)
-            acd_exp_values1 = scores[1][:, y].reshape(28,28)
-            acd_exp_values2 = scores[2][:, y].reshape(28,28)
+            occlusion_exp_values1 = scores[1][:, y].reshape(28,28)
+            buildup_exp_values2 = scores[2][:, y].reshape(28,28)
+            ig_exp_values2 = scores[3][:, y].reshape(28,28)
 
             for i in range(len(self.percents)):
                 res0 = torch.tensor(delet_top_k_feature(self.percents[i], Image.cpu().numpy(), acd_exp_values0)).to(device)
-                res1 = torch.tensor(delet_top_k_feature(self.percents[i], Image.cpu().numpy(), acd_exp_values1)).to(device)
-                res2 = torch.tensor(delet_top_k_feature(self.percents[i], Image.cpu().numpy(), acd_exp_values2)).to(device)
+                res1 = torch.tensor(delet_top_k_feature(self.percents[i], Image.cpu().numpy(), occlusion_exp_values1)).to(device)
+                res2 = torch.tensor(delet_top_k_feature(self.percents[i], Image.cpu().numpy(), buildup_exp_values2)).to(device)
+                res3 = torch.tensor(delet_top_k_feature(self.percents[i], Image.cpu().numpy(), ig_exp_values2)).to(device)
                 # plt.imshow(res.cpu().numpy().reshape(28, 28), cmap='gray')
                 # plt.show()
-                self.ACD_AOPC0[i] += base_value - model(res0).flatten()[y]
-                self.ACD_AOPC1[i] += base_value - model(res1).flatten()[y]
-                self.ACD_AOPC2[i] += base_value - model(res2).flatten()[y]
+                self.ACD_AOPC[i] += base_value - model(res0).flatten()[y]
+                self.OCCLUSION_AOPC[i] += base_value - model(res1).flatten()[y]
+                self.BUILDUP_AOPC[i] += base_value - model(res2).flatten()[y]
+                self.IG_AOPC[i] += base_value - model(res3).flatten()[y]
 
-        self.ACD_AOPC0 = self.ACD_AOPC0/testnum
-        self.ACD_AOPC1 = self.ACD_AOPC1/testnum
-        self.ACD_AOPC2 = self.ACD_AOPC2/testnum
+        self.ACD_AOPC = self.ACD_AOPC/testnum
+        self.OCCLUSION_AOPC = self.OCCLUSION_AOPC/testnum
+        self.BUILDUP_AOPC = self.BUILDUP_AOPC/testnum
+        self.IG_AOPC = self.IG_AOPC/testnum
 
-        return self.ACD_AOPC0, self.ACD_AOPC1, self.ACD_AOPC2
+        return self.ACD_AOPC, self.OCCLUSION_AOPC, self.BUILDUP_AOPC, self.IG_AOPC
 
     def plot_aopc(self):
         plt.figure(figsize=(8, 6))
@@ -140,6 +159,9 @@ class aopc:
         plt.plot(self.percents*100, self.SHAP_AOPC, '^-', markersize = 4, color = 'g', label="SHAP")
         plt.plot(self.percents*100, self.LIME_AOPC, 'o-', markersize = 4, color = 'c', label="LIME")
         plt.plot(self.percents*100, self.ACD_AOPC, '*-', markersize = 4, color = 'b', label="ACD")
+        plt.plot(self.percents*100, self.OCCLUSION_AOPC, 'h-', markersize = 4, color = 'r', label="OCCLUSION")
+        # plt.plot(self.percents*100, self.BUILDUP_AOPC, 'x-', markersize = 4, color = 'm', label="BUILD-UP")
+        plt.plot(self.percents*100, self.IG_AOPC, '.-', markersize = 4, color = 'k', label="IG")
         plt.ylabel("AOPC (MINST)",fontsize = 20)
         plt.xlabel("k%",fontsize = 20)
         plt.legend(prop={'size':20})
@@ -166,7 +188,7 @@ if __name__ == '__main__':
     # %% Test on SHAP
     # shap_exp = ShapExp(cnn.predict_proba, Image, masker=basic_seg.get_mask())
     # shap_exp_values = shap_exp.shap_values[y, 0, 0, :, :]
-    # print(f"SHAP AOPC on image {img_ID} is {AOPCs.get_single_aopc_value(Image, y, shap_exp_values)}")
+    # print(f"SHAP AOPC on image {img_ID} is {AOPCs.get_single_aopc_value(cnn.predict_proba, Image, y, shap_exp_values)}")
     # %% Test on LIME
     # lime_exp = LimeExp(Image.squeeze(0), basic_seg.get_mask, num_features=784, num_samples=2000)
     # lime_exp_values = lime_exp.get_exp_values()
@@ -177,4 +199,5 @@ if __name__ == '__main__':
     print(AOPCs.get_average_shap_aopc_value(testnum=50, dataset = mnist))
     print(AOPCs.get_average_lime_aopc_value(testnum=50, dataset = mnist))
     print(AOPCs.get_average_acd_aopc_value(testnum=50, dataset = mnist))
+    print(AOPCs.get_average_bhem_aopc_value(testnum=50, dataset = mnist))
     AOPCs.plot_aopc()

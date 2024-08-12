@@ -226,8 +226,8 @@ class BhemExp:
 
         if savename is not None:
             plt.savefig(savename)
-        
-        plt.show()
+        else:
+            plt.show()
 
     def print_explanation_info(self):
         logging.info(f'''Explanaion Info:
@@ -253,7 +253,7 @@ if __name__ == "__main__":
     # %% Load MINST dataset
     mnist = handwriting('mnist_784', normalize=True)
 
-    testnum = 50
+    testnum = 100
     Images = mnist.XCnn[:testnum]
     Xlabel = cnn.predict(Images)
     Images.shape, Xlabel.shape
@@ -282,17 +282,11 @@ if __name__ == "__main__":
     # resized_images = F.interpolate(torch.tensor(result), size=(28, 28), mode='bilinear', align_corners=False).numpy()
 
     # bhem_exp.plot_viz(result, resized_images, savename=f'./images/bhem_{img_ID}.png')
-    for img_ID in tqdm.tqdm(range(testnum), desc=f"BHEM: dealing with \033[92m{testnum}\033[0m images"):
+    for img_ID in tqdm.tqdm(range(50,testnum), desc=f"BHEM: dealing with \033[92m{testnum}\033[0m images"):
         img = Images[img_ID].reshape(28, 28)
         label = Xlabel[img_ID]
         # img = image_array.astype(np.float32)
         bhem_exp = BhemExp(img, layer_num=4, random_state=None, random_seed=None)
-
-        plt.figure(figsize=(10, 5))
-        for i in range(testnum):
-            plt.subplot(5, 10, i+1)
-            plt.imshow(Images[i].reshape(28, 28), cmap='gray')
-            plt.axis('off')
 
         bhem_exp.print_explanation_info()
 
@@ -303,6 +297,6 @@ if __name__ == "__main__":
         np.save(f'./result/bhem/result_array_{img_ID}.npy', result)
 
         import torch.nn.functional as F
-        resized_images = F.interpolate(torch.tensor(result), size=(28, 28), mode='bilinear', align_corners=False).numpy()
+        resized_images = F.interpolate(torch.tensor(result), size=(28, 28), mode='bilinear', align_corners=False).numpy()/4
 
         bhem_exp.plot_viz(result, resized_images, savename=f'./images/bhem_{img_ID}.png')
