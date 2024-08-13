@@ -153,7 +153,7 @@ class aopc:
 
         return self.ACD_AOPC, self.OCCLUSION_AOPC, self.BUILDUP_AOPC, self.IG_AOPC
 
-    def plot_aopc(self):
+    def plot_aopc(self, savename=None):
         plt.figure(figsize=(8, 6))
         plt.plot(self.percents*100, self.BHEM_AOPC, 's-', markersize = 4, color = 'y', label="BHEM")
         plt.plot(self.percents*100, self.SHAP_AOPC, '^-', markersize = 4, color = 'g', label="SHAP")
@@ -165,7 +165,11 @@ class aopc:
         plt.ylabel("AOPC (MINST)",fontsize = 20)
         plt.xlabel("k%",fontsize = 20)
         plt.legend(prop={'size':20})
-        plt.show()
+
+        if savename:
+            plt.savefig(savename)
+        else:
+            plt.show()
 
 if __name__ == '__main__':
     torch.manual_seed(0)
@@ -201,4 +205,4 @@ if __name__ == '__main__':
     print(AOPCs.get_average_lime_aopc_value(testnum=testnum, dataset = mnist))
     print(AOPCs.get_average_acd_aopc_value(testnum=testnum, dataset = mnist))
     print(AOPCs.get_average_bhem_aopc_value(testnum=testnum, dataset = mnist))
-    AOPCs.plot_aopc()
+    AOPCs.plot_aopc(savename='./AOPC_MNIST.pdf')
