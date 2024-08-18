@@ -97,8 +97,6 @@ if __name__ == '__main__':
     from matplotlib import pyplot as plt
     from skimage.color import gray2rgb
     import sys
-    sys.path.append('E:/Projects/XAI/BHEM')
-    sys.path.append('/run/media/xiangyu/Data/Projects/XAI/BHEM')
     basic_seg = basic_segment(np.zeros((28,28)))
     print(basic_seg.H, basic_seg.W)
     for i in range(6):

@@ -3,8 +3,6 @@ import torch
 import sys
 import tqdm
 
-sys.path.append('/run/media/xiangyu/Data/Projects/XAI/BHEM')
-
 from model.explanation.shap_exp import ShapExp
 from model.explanation.lime_exp import LimeExp
 from model.explanation.acd_exp import AcdExp
