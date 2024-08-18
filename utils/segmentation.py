@@ -58,25 +58,36 @@ class basic_segment:
 
     def plot_segments(self, feature_ID, savename=None):
         feature = self.get_mask(feature_ID=feature_ID)
-        print(feature)
+        # print(feature)
         # Display heatmap of basic_seg
         plt.figure(figsize=(18,18))
-        plt.imshow(feature, cmap='cool')
-        plt.colorbar().outline.set_linewidth(1)
-        plt.gca().xaxis.tick_top()
-        plt.gca().yaxis.tick_left()
+        plt.imshow(feature, cmap='cool', interpolation='nearest')
         for i in range(self.W):
             for j in range(self.H):
-                plt.text(j, i, int(feature[i, j]), ha='center', va='center', color='black')
+                if i > 0 and feature[i, j] != feature[i-1, j]:
+                    plt.plot([j-0.5, j+0.5], [i-0.5, i-0.5], color='black', linewidth=1)
+                if j > 0 and feature[i, j] != feature[i, j-1]:
+                    plt.plot([j-0.5, j-0.5], [i-0.5, i+0.5], color='black', linewidth=1)
+                if i < self.W-1 and feature[i, j] != feature[i+1, j]:
+                    plt.plot([j-0.5, j+0.5], [i+0.5, i+0.5], color='black', linewidth=1)
+                if j < self.H-1 and feature[i, j] != feature[i, j+1]:
+                    plt.plot([j+0.5, j+0.5], [i-0.5, i+0.5], color='black', linewidth=1)
 
-        plt.xticks(np.arange(0, self.W, 1))
-        plt.yticks(np.arange(0, self.H, 1))
-        plt.title(f'Basic Segmentation: Layer {feature_ID}', fontsize=25, y=1.05)
+        # plt.colorbar().outline.set_linewidth(1)
+        # plt.gca().xaxis.tick_top()
+        # plt.gca().yaxis.tick_left()
+        # for i in range(self.W):
+        #     for j in range(self.H):
+        #         plt.text(j, i, int(feature[i, j]), ha='center', va='center', color='black')
+
+        plt.xticks([0, self.W-1], fontsize=35)
+        plt.yticks([0, self.H-1], fontsize=35)
+        # plt.title(f'Basic Segmentation: Layer {feature_ID}', fontsize=25, y=1.05)
         
         if savename is not None:
             plt.savefig(savename)
-            
-        plt.show()
+        else:
+            plt.show()
 
     # def __call__(self):
     #     return self.seg
@@ -91,7 +102,7 @@ if __name__ == '__main__':
     basic_seg = basic_segment(np.zeros((28,28)))
     print(basic_seg.H, basic_seg.W)
     for i in range(6):
-        basic_seg.plot_segments(feature_ID=i, savename=f'./basic_seg_layer_{i}.png')
+        basic_seg.plot_segments(feature_ID=i, savename=f'./basic_seg_layer_{i}.svg')
         
     
     from dataset import handwriting
@@ -112,19 +123,19 @@ if __name__ == '__main__':
 
     print(f"Number of segments: {len(np.unique(segments_qs))}, {len(np.unique(segments_slic))}")
 
-    plt.figure(figsize=(15, 5))
-    plt.subplot(1, 3, 1)
-    plt.imshow(image)
-    plt.title(f"Original Image")
-    plt.axis('off')
-    plt.subplot(1, 3, 2)
-    plt.imshow(segments_qs)
-    plt.title(f"Quickshift Segmentation")
-    plt.axis('off')
-    plt.subplot(1, 3, 3)
-    plt.imshow(segments_slic)
-    plt.title(f"SLIC Segmentation")
-    plt.axis('off')
-    plt.show()
+    # plt.figure(figsize=(15, 5))
+    # plt.subplot(1, 3, 1)
+    # plt.imshow(image)
+    # plt.title(f"Original Image")
+    # plt.axis('off')
+    # plt.subplot(1, 3, 2)
+    # plt.imshow(segments_qs)
+    # plt.title(f"Quickshift Segmentation")
+    # plt.axis('off')
+    # plt.subplot(1, 3, 3)
+    # plt.imshow(segments_slic)
+    # plt.title(f"SLIC Segmentation")
+    # plt.axis('off')
+    # plt.show()
 
     print(segments_qs)

@@ -74,12 +74,12 @@ class AcdExp:
             for j in range(11):
                 plt.subplot(len(scores), 11, (i)*11+j+1)
                 if j == 0:
-                    plt.imshow(raw_image, cmap='gray')
+                    plt.imshow(raw_image, cmap='gray_r', alpha=0.3)
                     plt.xticks([])
                     plt.yticks([])
                     plt.ylabel(titles[i], fontsize = 25)
                 else:
-                    # plt.imshow(-bhem_exp.image, cmap='gray', alpha=0.3)
+                    plt.imshow(raw_image, cmap='gray_r', alpha=0.3)
                     plt.imshow(score[j-1], cmap=red_transparent_blue, vmin=-np.nanpercentile(score, 99.9),vmax=np.nanpercentile(score, 99.9))
                     plt.axis('off')
         plt.show()
@@ -107,7 +107,7 @@ if __name__ == '__main__':
     X_preds = model(Xsample)
     Xsample.shape, X_preds.shape
 
-    img_ID = 4
+    img_ID = 5
 
     image = torch.tensor(mnist.XCnn[img_ID].reshape(-1, 1, 28, 28)).to(device)
 

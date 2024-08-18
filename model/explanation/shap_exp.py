@@ -100,11 +100,11 @@ if __name__ == "__main__":
     import pandas as pd
     import seaborn as sns
     print(segments_qs)
-    shap_values = shap_exp.shap_values[shap_exp.y,0].reshape(shap_exp.H,shap_exp.W)
+    shap_values = shap_exp.shap_values[:,0].reshape(-1,shap_exp.H,shap_exp.W)
     # df = pd.DataFrame(shap_values)
     # df.to_csv('shap_values.csv', index=False)
-    print(len(np.unique(shap_values)))
-    sns.heatmap(shap_values, cmap='coolwarm')
-    plt.show()
+    # print(len(np.unique(shap_values)))
+    # sns.heatmap(shap_values, cmap='coolwarm')
+    # plt.show()
 
-    np.save(f'./result/shap/result_shap_array_{testID}.npy', shap_values)
+    np.save(f'./result/shap/result_array_{testID}.npy', shap_values)
