@@ -7,10 +7,6 @@ import sys
 from tqdm import tqdm
 
 import acd
-
-sys.path.append('/umich/Library/Mobile Documents/com~apple~CloudDocs/BHEM')
-sys.path.append('/run/media/xiangyu/Data/Projects/XAI/BHEM')
-
 from model.explanation import dset
 
 # %%

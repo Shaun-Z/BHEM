@@ -61,10 +61,7 @@ class LimeExp:
 if __name__ == '__main__':
     from matplotlib import pyplot as plt
     import sys
-    sys.path.append('E:/Projects/XAI/BHEM')
-    sys.path.append('/umich/Library/Mobile Documents/com~apple~CloudDocs/BHEM')
-    sys.path.append('/run/media/xiangyu/Data/Projects/XAI/BHEM')
-    
+        
     from dataset import handwriting
     from utils import reconstruct_mask, basic_segment, quickshift, slic
     torch.manual_seed(0)

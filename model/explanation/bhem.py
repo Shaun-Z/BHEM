@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import logging
 import sys
 
-sys.path.append('/run/media/xiangyu/Data/Projects/XAI/BHEM')
 from utils import basic_segment, red_transparent_blue
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
@@ -243,7 +242,6 @@ if __name__ == "__main__":
     import sys
     import torch
     sys.path.append('E:/Projects/XAI/BHEM')
-    sys.path.append('/run/media/xiangyu/Data/Projects/XAI/BHEM')
     from model import Cnn, getClassifier
     from dataset import handwriting
     from utils import reconstruct_mask, basic_segment, quickshift, slic

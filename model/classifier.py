@@ -51,8 +51,6 @@ if __name__ == '__main__':
 
     # %% Load MINST dataset
     import sys
-    sys.path.append('E:/Projects/XAI/BHEM')
-    sys.path.append('/run/media/xiangyu/Data/Projects/XAI/BHEM')
     from dataset import handwriting
     mnist = handwriting('mnist_784', normalize=True)
 

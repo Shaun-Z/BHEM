@@ -6,8 +6,6 @@ import matplotlib.pyplot as plt
 
 import sys
 
-sys.path.append('/run/media/xiangyu/Data/Projects/XAI/BHEM')
-# sys.path.append('../../../BHEM')
 from utils import red_transparent_blue
 
 class ShapExp:
@@ -65,8 +63,6 @@ class ShapExp:
 
 if __name__ == "__main__":
     import sys
-    sys.path.append('E:/Projects/XAI/BHEM')
-    sys.path.append('/run/media/xiangyu/Data/Projects/XAI/BHEM')
     from model import Cnn, getClassifier
     from dataset import handwriting
     from utils import reconstruct_mask, basic_segment, quickshift, slic
